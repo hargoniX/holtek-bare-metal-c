@@ -13,7 +13,7 @@ __attribute__ ((section("vectors")))= {
     (unsigned int *)    startup     // code entry point
 };
 
-void main();
+int main();
 
 void startup()
 {
