@@ -1,50 +1,65 @@
-extern unsigned int _DATA_ROM_START;
-extern unsigned int _DATA_RAM_START;
-extern unsigned int _DATA_RAM_END;
-extern unsigned int _BSS_START;
-extern unsigned int _BSS_END;
+#include <stddef.h>
+#include <stdint.h>
 
-#define STACK_TOP 0x20004000
-void startup();
-
-unsigned int * myvectors[2]
-__attribute__ ((section("vectors")))= {
-    (unsigned int *)    STACK_TOP,  // stack pointer
-    (unsigned int *)    startup     // code entry point
-};
+typedef struct __attribute__((packed)) {
+    uint32_t r0;
+    uint32_t r1;
+    uint32_t r2;
+    uint32_t r3;
+    uint32_t r12;
+    uint32_t lr;
+    uint32_t pc;
+    uint32_t xpsr;
+} ExceptionFrame;
 
 int main();
+extern void Reset();
+extern void HardFaultTrampoline();
+void HardFault(ExceptionFrame*);
+void svcall_handler();
+void pendsv_handler();
+void systick_handler();
+void nmi_handler();
+void __pre_init();
 
-void startup()
-{
-    /* Copy data belonging to the `.data` section from its
-     * load time position on flash (ROM) to its run time position
-     * in SRAM.
-     */
-    unsigned int * data_rom_start_p = &_DATA_ROM_START;
-    unsigned int * data_ram_start_p = &_DATA_RAM_START;
-    unsigned int * data_ram_end_p = &_DATA_RAM_END;
+void (*reset_vector_pointer)(void) __attribute__ ((section (".vector_table.reset_vector"))) = &Reset;
+void *exception_vector_pointers[14] __attribute__ ((section (".vector_table.exceptions"))) = {
+    nmi_handler,
+    HardFaultTrampoline,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    svcall_handler,
+    NULL,
+    NULL,
+    pendsv_handler,
+    systick_handler
+};
 
-    while(data_ram_start_p != data_ram_end_p)
-    {
-        *data_ram_start_p = *data_rom_start_p;
-        data_ram_start_p++;
-        data_rom_start_p++;
-    }
+void __pre_init() {
 
-    /* Initialize data in the `.bss` section to zeros.
-     */
-    unsigned int * bss_start_p = &_BSS_START;
-    unsigned int * bss_end_p = &_BSS_END;
+}
 
-    while(bss_start_p != bss_end_p)
-    {
-        *bss_start_p = 0;
-        bss_start_p++;
-    }
+void systick_handler() {
+    while(1) {}
+}
 
+void pendsv_handler() {
+    while(1) {}
+}
 
-    /* Call the `main()` function
-     */
-    main();
+void svcall_handler() {
+    while(1) {}
+}
+
+void nmi_handler() {
+    while(1) {}
+}
+
+void HardFault(ExceptionFrame *frame) {
+    while(1) {}
 }
